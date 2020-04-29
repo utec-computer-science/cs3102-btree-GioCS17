@@ -42,17 +42,30 @@ int linearSearch(T** node,value_t value){
   }
   return l;
 }
+
+#define ALTER 20
+
 template<typename T>
-void inorder_print(T* node){
+void inorder_print(T* node,int space){
+
+  space+=ALTER;
 
   if(!node->isLeaf)
-      inorder_print<T>(node->children[0]);
+      inorder_print<T>(node->children[0],space);
 
-  for(int i=0;i<node->size;i++){
-    std::cout<<node->values[i]<<" ";
-    if(!node->isLeaf)
-      inorder_print<T>(node->children[i+1]);
-  }
+  std::cout<<std::endl;
+
+  for(int i=ALTER;i<space;i++)
+    std::cout<<" ";
+
+  for(int i=0;i<node->size;i++)
+    std::cout<<node->values[i]<<",";
+
+  std::cout<<std::endl;
+
+  if(!node->isLeaf)
+    for(int i=1;i<=node->size;i++)
+      inorder_print<T>(node->children[i],space);
 
 }
 
@@ -234,7 +247,9 @@ struct TreeHelper<T,1>{
   }
 
   static void print(Node* root){
-    inorder_print<Node>(root);
+    if(root->size==0)
+      return;
+    inorder_print<Node>(root,0);
   }
 };
 
@@ -293,7 +308,7 @@ public:
 int main() {
 
   srand(time(NULL));
-  int size=300;
+  int size=40;
 
   //Prueba con binttree
   using b_4int_node = BNode<int,4>;
