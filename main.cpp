@@ -42,18 +42,32 @@ int linearSearch(T** node,value_t value){
   }
   return l;
 }
+template<typename T>
+void inorder_print(T* node){
+
+  if(!node->isLeaf)
+      inorder_print<T>(node->children[0]);
+
+  for(int i=0;i<node->size;i++){
+    std::cout<<node->values[i]<<" ";
+    if(!node->isLeaf)
+      inorder_print<T>(node->children[i+1]);
+  }
+
+}
 
 template<typename T>
 void preorder_print(T* node){
   for(int i=0;i<node->size;i++){
     std::cout<<node->values[i]<<" ";
   }
+  std::cout<<"\n";
   if(!node->isLeaf){
     for(int i=0;i<=node->size;i++){
       preorder_print<T>(node->children[i]);
+      std::cout<<"\t";
     }
   }
-  std::cout<<"\n";
 }
 
 
@@ -61,7 +75,7 @@ template<typename T>
 void postorder_print(T* node){
   if(!node->isLeaf){
     for(int i=0;i<=node->size;i++)
-      preorder_print<T>(node->children[i]);
+      postorder_print<T>(node->children[i]);
   }
   std::cout<<"\t";
   for(int i=0;i<node->size;i++){
@@ -84,15 +98,13 @@ void insertNonFull(T** node,value_t value,T* new_son){
   int index=(*node)->size;
   while(index>0 && (*node)->values[index-1]>value){
     std::swap((*node)->values[index-1],(*node)->values[index]);
-
-    if(!(*node)->isLeaf){
-      std::swap((*node)->children[index],(*node)->children[index+1]);
-    }
+    std::swap((*node)->children[index],(*node)->children[index+1]);
     index--;
   }
    (*node)->values[index]=value;
    (*node)->children[index+1]=new_son;
    (*node)->size++;
+
 }
 
 template<typename T,typename value_t>
@@ -115,7 +127,7 @@ void insertFull(T** node,value_t value,T* new_son,int sizeT){
   }
 
   int pos=dim;
-  while(_values[pos-1]>value){
+  while(_values[pos-1]>value && pos>0){
     std::swap(_values[pos-1],_values[pos]);
     std::swap(_children[pos],_children[pos+1]);
     pos--;
@@ -123,6 +135,7 @@ void insertFull(T** node,value_t value,T* new_son,int sizeT){
 
   _values[pos]=value;
   _children[pos+1]=new_son;
+
 
   int i;
   for(i=0;i<dim/2;i++){
@@ -135,10 +148,17 @@ void insertFull(T** node,value_t value,T* new_son,int sizeT){
   value_t value_aux=_values[i];
   i++;
 
-  node_bro->children[0]=_children[i];
+  if(!node_bro->isLeaf){
+    node_bro->children[0]=_children[i];
+    node_bro->children[0]->parent=node_bro;
+  }
+    
   for(int j=0;i<=dim;i++,j++){
     node_bro->values[j]=_values[i];
-    node_bro->children[j+1]=_children[i+1];
+    if(!node_bro->isLeaf){
+      node_bro->children[j+1]=_children[i+1];
+      node_bro->children[j+1]->parent=node_bro;
+    }
     node_bro->size++;
   }
 
@@ -172,6 +192,8 @@ struct TreeHelper<T,1>{
   using value_t = typename Node::value_t;
 
   static void insert(Node** node, value_t value,size_t dim){
+
+
     if((*node)->size==0){
       (*node)->values[0]=value;
       (*node)->size++;
@@ -179,8 +201,8 @@ struct TreeHelper<T,1>{
     }
     search(value,node);
 
+
     if((*node)->size==dim){
-      std::cout<<"Entro a size full\n";
       insertFull<Node,value_t>(node,value,nullptr,dim);
     }
     else{
@@ -197,9 +219,10 @@ struct TreeHelper<T,1>{
     int pos;
     while(!(*node)->isLeaf){
       pos=binarySearch<Node,value_t>(node,value);
-      if(pos<(*node)->size)
+      if(pos<(*node)->size){
         if((*node)->values[pos]==value)
           ans=true;
+      }
       *node=(*node)->children[pos];
     }
     if(ans)
@@ -211,7 +234,7 @@ struct TreeHelper<T,1>{
   }
 
   static void print(Node* root){
-    preorder_print<Node>(root);
+    inorder_print<Node>(root);
   }
 };
 
@@ -270,25 +293,45 @@ public:
 int main() {
 
   srand(time(NULL));
-  int size=20;
+  int size=300;
 
-  using b_3int_node = BNode<int,4>;
-  using b_3int_tree =  BTree<b_3int_node>;
-  b_3int_tree btree;
+  //Prueba con binttree
+  using b_4int_node = BNode<int,4>;
+  using b_4int_tree =  BTree<b_4int_node>;
+  b_4int_tree btree;
   std::vector<int> v(size);
+
   for(int i =0;i<size;i++)
-    v[i]=rand()%100000+1;
+    v[i]=rand()%10000+1;
 
   for(int i =0;i<size;i++){
     std::cout<<"\nvalue entereed ::"<<v[i]<<std::endl;
     btree.insert(v[i]);
-    std::cout<<btree<<std::endl;
   }
 
   for(int i =0;i<size;i++)
     std::cout<<v[i]<<" is "<<btree.find(v[i])<<std::endl;
   std::cout<<btree<<std::endl;
 
+
+  //Prueba con bfloattree
+  using b_3float_node = BNode<float,3>;
+  using b_3float_tree =  BTree<b_3float_node>;
+  b_3float_tree btree2;
+
+  float a=5.0;
+  std::vector<float> v2(size);
+  for(int i =0;i<size;i++)
+    v2[i]=(float(rand())/float((RAND_MAX)) * a);
+
+  for(int i =0;i<size;i++){
+    std::cout<<"\nvalue entereed ::"<<v2[i]<<std::endl;
+    btree2.insert(v2[i]);
+  }
+
+  for(int i =0;i<size;i++)
+    std::cout<<v2[i]<<" is "<<btree2.find(v2[i])<<std::endl;
+  std::cout<<btree2<<std::endl;
 
   return 0;
 }
